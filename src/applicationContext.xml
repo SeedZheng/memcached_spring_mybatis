@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"  
+    xmlns:context="http://www.springframework.org/schema/context"  
+    xsi:schemaLocation="http://www.springframework.org/schema/beans                
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd               
+       http://www.springframework.org/schema/context                
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd">  
+    <!-- 获取JDBC连接属性 -->  
+    <context:property-placeholder location="classpath:jdbc.properties" />  
+    <!-- 配置数据源 -->  
+    <bean id="dataSource"  
+        class="org.springframework.jdbc.datasource.DriverManagerDataSource">  
+        <property name="driverClassName" value="${jdbc.driverClassName}"></property>  
+        <property name="url" value="${jdbc.url}">  
+        </property>  
+    </bean>  
+    <!-- sqlSessionFactory -->  <!-- MyBatis在spring中Bean的配置，都是固定的 -->  
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">  
+        <property name="configLocation" value="classpath:mybatis-config.xml" />  
+        <property name="dataSource" ref="dataSource" />  
+    </bean>  
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">  
+        <constructor-arg index="0" ref="sqlSessionFactory" />  
+    </bean>  
+    <!-- 引入memcached配置文件 -->  
+    <import resource="spring-memcached.xml"/>  
+    <!-- 配置映射器 -->  
+    <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">  
+        <property name="mapperInterface" value="com.test.dao.IUserDao" />  
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />  
+    </bean>  
+    <!-- 为业务逻辑层注入数据的对象 -->  
+    <bean id="userServer" class="com.test.server.UserServerImpl">  
+        <property name="userDao" ref="userMapper"></property>  
+        <property name="memcachedClient" ref="memcachedClient"></property>  
+    </bean>  
+    <bean id="login" class="com.test.web.LoginController">  
+        <property name="server" ref="userServer"></property>  
+    </bean>  
+    
+     <!-- <bean id="KETAMA_HASH" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+        <property name="staticField" value="net.spy.memcached.DefaultHashAlgorithm.KETAMA_HASH" />
+    </bean> -->
+</beans>   
