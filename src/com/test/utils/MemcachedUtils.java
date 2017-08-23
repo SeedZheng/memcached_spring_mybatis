@@ -7,9 +7,14 @@ import java.io.PrintWriter;
 import java.io.StringWriter;  
 import java.lang.management.ManagementFactory;  
 import java.lang.management.RuntimeMXBean;  
-import java.text.SimpleDateFormat;  
-import java.util.Date;  
-  
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.Logger;  
   
 import com.danga.MemCached.MemCachedClient;  
@@ -27,7 +32,9 @@ public class MemcachedUtils
     private MemcachedUtils()  
     {  
     }  
-  
+    
+    
+
     /** 
      * 向缓存添加新的键值对。如果键已经存在，则之前的值将被替换。 
      *  
@@ -283,7 +290,34 @@ public class MemcachedUtils
         }  
         return flag;  
     }  
-  
+    
+  /**
+   *   flush_all 实际上没有立即释放项目所占用的内存，而是在随后陆续有新的项目被储存时执行（这是由memcached的懒惰检测和删除机制决定的）
+   */
+    public static void getAll(){
+    	Map<String, Map<String,String>> slabs=cachedClient.statsItems(); 
+    	Iterator<String> keySet =slabs.keySet().iterator(); 
+    	Map<String,String> secondMap=new HashMap<>();
+    	List<String> valueList=new ArrayList<>();
+    	
+    	while(keySet.hasNext()){
+    		String key=keySet.next();
+    		secondMap=slabs.get(key);
+    		Iterator i=secondMap.keySet().iterator();
+    		while(i.hasNext()){
+    			Object key_2=i.next();
+    			String value=secondMap.get(key_2);
+    			valueList.add(value);
+    		}
+    	}
+    	
+    	for(String s:valueList){
+    		System.out.print("值为："+s);
+    		System.out.println();
+    	}
+    	
+    	
+    }
     /** 
      * 返回异常栈信息，String类型 
      *  
@@ -377,5 +411,6 @@ public class MemcachedUtils
                 logger.error("memcached 日志对象关闭失败", e);  
             }  
         }  
-    }  
+    } 
+    
 }  
